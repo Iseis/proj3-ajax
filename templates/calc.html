@@ -29,69 +29,86 @@
 <!-- bootstrap requires a 'container' div around content -->
 <div class="container">
 
-<h1>ACP Brevet Closing times</h1>
+<h1>ACP Brevet Opening and Closing times</h1>
 
-  <!--
-  -- If there are any warnings or other messages from a prior
-  -- request to the server, 
-  -- they appear above the rest of the content, just until the next 
-  -- action.  (This is only on request/response transactions that
-  -- result in regenerating the page, not on every xmlhttp request.) 
-  -->
+<!-- Get the distance -->
+<p></p>Select a distance:  
+	<select  name="distance" size="1" id="selected_distance">
+		<option value=200>200</option>
+		<option value=300>300</option>
+		<option value=400>400</option>
+		<option value=600>600</option>
+		<option value=1000>1000</option>
+	</select>
+</p>
+<!-- Get the start date and the start time for later use -->
+<p>Select a date(MM/DD/YYYY): <input type="text" id="start_date"/></p>
+<p>Select a starting time(HH:MM): <input type="text" id="start_time"/></p>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
+<!-- prints an error message -->
+<p id = "error" class = "error"></p>
+<HR SIZE="6" NOSHADE>
 
-<!-- Design on bootstrap grid -->
 <form role="form">
+
 <div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
+	<div class="col-md-1">
+        <p><b>Checkpoint</b></p>
+    </div>
+    <div class="col-md-2">
+        <p><b>Distance</b></p>
+    </div>
+    <div class="col-md-2">
+        <p><b>Location</b></p>
+    </div>
+    <div class="col-md-2">
+        <p><b>Open Date/Open Time</b></p>
+    </div>
+     <div class="col-md-2">
+        <p><b>Close Date/Open Time</b></p>
+    </div>
 </div>
 
 <div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
-</div>
+	<div class="col-md-1">
+		<p>1</p>
+    </div>
+    <div class="col-md-1">
+		<p>0 START!</p>
+    </div>
+    <div class="col-md-3">
+         <input type="text" class="form-control"
+         name="location" value="location (optional)" />
+    </div>
+    <div id="first_start" class="col-md-2">
+		<span class="times form-control">(Open Date/Time)</span>
+    </div>
+	<div id="first_close" class="col-md-2">
+		<span class="times form-control">(Close Date/Time)</span>
+	</div>
+ </div>
 
+{% for x in range(2, 11) %}
 <div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
-</div>
+	<div class="col-md-1">
+		<p>{{x}}</p>
+    </div>
+    <div class="col-md-1">
+		<input type="text" class="form-control"
+		name="distance" />
+    </div>
+    <div class="col-md-3">
+         <input type="text" class="form-control"
+         name="location" value="location (optional)" />
+    </div>
+    <div id="open_time" class="col-md-2">
+		<span class="times form-control">(Open Date/Time)</span>
+    </div>
+	<div id="close_time" class="col-md-2">
+		<span class="times form-control">(Close Date/Time)</span>
+	</div>
+ </div>
+ {% endfor %}
 </form>
 
 <script type="text/javascript">
@@ -100,28 +117,45 @@
 
   $(document).ready(function(){
    // Do the following when the page is finished loading
-
-      // When a field named 'miles' is changed ...
-      $('input[name="miles"]').change(
+	  var total_distance = 0;
+	  var start_time = "";
+	  var date = "";
+	  
+      // When a field named 'distance' is changed ...
+      $('input[name="distance"]').change(
           // ... execute this function
           function(){
-              var e_miles = $(this).val();
+              var dist = $(this).val();
+			  total_distance = document.getElementById("selected_distance").value;
+			  start_time = document.getElementById("start_time").value;
+			  start_date = document.getElementById("start_date").value;
+              var open_time = $(this).parents(".row").find("#open_time");
+              var close_time = $(this).parents(".row").find("#close_time");
 
-              var target = $(this).parents(".row").find(".times");
-
-              // DEBUG: How do I replace the 'times' field?
-              // alert("Content of the field I want to change: " +
-              //   target.html());
+			  if(dist < total_distance)
+				$('#error').text("Need more distances")
+			  else if(start_time == "" || start_date == ""){
+				$('#error').text("Need a start date and time refresh page")
+              else
+                $('#error').text("")
 
               // AJAX request
               $.getJSON($SCRIPT_ROOT + '/_calc_times',
                   // The object to pass to the server
-                  { miles: e_miles },
+                  { distance: dist, total_dist: total_distance, 
+					  start: start_time,  date: start_date},
                   // The function to call with the response
                   function(data) {
-                     var times = data.result;
-                     // alert("Got a response: " +  times);
-                     target.text(times);
+
+                     var close = data.result.closeing;
+                     var start = data.result.start;
+                     var first_c = data.result.first_c;
+                     var first_o = data.result.first_o;
+                     $('#first_close').text(first_c);
+                     $('#first_start').text(first_o);
+
+                     open_time.text(start);
+                     close_time.text(close);
                   }); // End of the call to getJSON
           });  // End of the function to be called when field changes
               
