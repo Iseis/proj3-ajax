@@ -6,3 +6,6 @@
  * add more specific styles. 
  */
 
+.error {
+	color: red;
+}
